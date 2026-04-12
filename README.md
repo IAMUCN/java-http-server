@@ -18,3 +18,7 @@ next tasks for me to do
 
 · Write Response Messages
 
+For the configuration files i have created a json file to have a litte bit flexibility
+and added configuration class and configuration manager class 
+         in that i added getter and setter method for the port number and the webroot
+
