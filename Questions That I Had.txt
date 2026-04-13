@@ -1,0 +1,65 @@
+Q. What is an HTTP server? Is it a method, rule, or software? And how does it work internally?
+
+    HTTP (HyperText Transfer Protocol) is a protocol — a set of agreed-upon rules for how two parties communicate over a network. It is not a method or software by itself.
+    An HTTP server is the software that implements those rules. It:
+    Listens on a network port (e.g. 8080) using a ServerSocket
+    Accepts incoming TCP connections from browsers/clients
+    Reads the raw request text from the socket's InputStream
+    Parses it according to HTTP rules (method, path, headers)
+    Finds the requested resource (e.g. a file in WebRoot)
+    Writes back an HTTP-formatted response to the socket's OutputStream
+    Closes the connection (or keeps it alive) and loops back to step 2
+    The browser and server can communicate because they both agree to follow the same HTTP language — requests follow a defined format, and responses follow a defined format.
+
+Q. What is a port? How many ports are there in a device? How do I see them? Which port does what?
+
+    A port is a numbered "door" on your computer's network interface. Your device has one IP address but 65,535 ports. Each application that wants to receive network data picks a port number and listens on it. The OS routes incoming data to the correct app based on the port number — like a post office routing mail by apartment number.
+    Well-known ports (0–1023):
+    Port 80 -> HTTP (standard web traffic)
+    Port 443 -> HTTPS (secure web)
+    Port 22 -> SSH (remote terminal)
+    Port 21 -> FTP (file transfer)
+    Port 25 -> SMTP (sending email)
+    Port 3306 -> MySQL database
+    Your server uses port 8080 because ports below 1024 require admin/root privileges on most systems. Port 8080 is a common alternative for development HTTP servers.
+    To see open ports on your machine:
+    Linux/Mac: netstat -an
+    Windows: netstat -aon
+
+Q. What is WebRoot (the location where all the files will live)?
+
+    WebRoot is a folder on your hard drive that acts as the root of your website's file system.
+    When a browser requests /index.html, your server prepends the WebRoot directory path to find the actual file on disk:
+    Browser requests: GET /index.html
+    Server resolves to: /path/to/WebRoot/index.html
+    It is also a security boundary — your server should never serve files outside this folder. If someone requests /../passwords.txt, a properly written server must refuse because that path would escape the WebRoot.
+
+    Example WebRoot structure:
+    WebRoot/
+    index.html -> served at /
+    style.css -> served at /style.css
+    images/
+    logo.png -> served at /images/logo.png
+
+Q. What is a ConfigurationManager and why do we use it? Why does it have to be a Singleton?
+
+    A ConfigurationManager reads your config file once (port number, WebRoot path, etc.) and holds those settings in memory so every part of your server can access them.
+    Why Singleton? If two parts of your code each created their own ConfigurationManager, they might read different values, load the file twice, or get out of sync. A Singleton ensures there is exactly one instance shared across the entire application — one consistent source of truth.
+
+Q. Why is the instance variable private static? What is a private constructor? What does getInstance() do?
+
+    private static ConfigurationManager instance
+    static means this variable belongs to the class itself, not to any object. It exists once, shared globally.
+    private means nothing outside the class can touch it directly.
+    This is the single shared slot that holds the one instance.
+    private ConfigurationManager() (private constructor)
+    Making the constructor private means nobody outside the class can write new ConfigurationManager().
+    This is the lock — it is physically impossible to accidentally create a second instance.
+    public static ConfigurationManager getInstance()
+    This is the only way in.
+    First call: instance is null, so it creates the object and stores it.
+    Every call after that: just returns the already-existing stored object.
+    Because it is static, you call it on the class itself — no object needed:
+    ConfigurationManager cfg = ConfigurationManager.getInstance();
+    int port = cfg.getPort(); // 8080
+    Every class in your server (socket handler, file reader, request parser) calls getInstance() and gets the exact same object with the exact same config values.
